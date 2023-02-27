@@ -2,8 +2,6 @@ package driver
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"sync"
 
 	"github.com/docker/go-plugins-helpers/volume"
@@ -27,109 +25,117 @@ func New(ipfsMountPoint string) IPFS {
 }
 
 // Create implements /VolumeDriver.Create
-func (d IPFS) Create(r volume.Request) volume.Response {
-	fmt.Printf("Create %v\n", r)
+func (d IPFS) Create(r volume.CreateRequest) volume.ErrorResponse {
+	// fmt.Printf("Create %v\n", r)
+	// d.m.Lock()
+	// defer d.m.Unlock()
 
-	d.m.Lock()
-	defer d.m.Unlock()
+	// volumeName := r.Name
 
-	volumeName := r.Name
+	// if _, ok := d.volumes[volumeName]; ok {
+	// 	return volume.ErrorResponse{}
+	// }
 
-	if _, ok := d.volumes[volumeName]; ok {
-		return volume.Response{}
-	}
+	// volumePath := filepath.Join(d.mountPoint, volumeName)
 
-	volumePath := filepath.Join(d.mountPoint, volumeName)
+	// _, err := os.Lstat(volumePath)
+	// if err != nil {
+	// 	fmt.Println("Error", volumePath, err.Error())
+	// 	return volume.ErrorResponse{Err: fmt.Sprintf("Error while looking for volumePath %s: %s", volumePath, err.Error())}
+	// }
 
-	_, err := os.Lstat(volumePath)
-	if err != nil {
-		fmt.Println("Error", volumePath, err.Error())
-		return volume.Response{Err: fmt.Sprintf("Error while looking for volumePath %s: %s", volumePath, err.Error())}
-	}
-
-	d.volumes[volumeName] = volumePath
-
-	return volume.Response{}
+	// d.volumes[volumeName] = volumePath
+	// return volume.ErrorResponse{}
+	panic("Create")
 }
 
 // Path implements /VolumeDriver.Path
-func (d IPFS) Path(r volume.Request) volume.Response {
+func (d IPFS) Path(r volume.PathRequest) volume.PathResponse {
 	fmt.Printf("Path %v\n", r)
 	fmt.Printf("%v", d.volumes)
 	volumeName := r.Name
 
 	if volumePath, ok := d.volumes[volumeName]; ok {
-		return volume.Response{Mountpoint: volumePath}
+		return volume.PathResponse{
+			Mountpoint: volumePath,
+		}
 	}
 
-	return volume.Response{}
+	return volume.PathResponse{
+		Mountpoint: "",
+	}
 }
 
 // Remove implements /VolumeDriver.Remove
-func (d IPFS) Remove(r volume.Request) volume.Response {
-	fmt.Printf("Remove %v", r)
+func (d IPFS) Remove(r volume.RemoveRequest) volume.ErrorResponse {
+	// fmt.Printf("Remove %v", r)
 
-	d.m.Lock()
-	defer d.m.Unlock()
+	// d.m.Lock()
+	// defer d.m.Unlock()
 
-	volumeName := r.Name
+	// volumeName := r.Name
 
-	if _, ok := d.volumes[volumeName]; ok {
-		delete(d.volumes, volumeName)
-	}
+	// if _, ok := d.volumes[volumeName]; ok {
+	// 	delete(d.volumes, volumeName)
+	// }
 
-	return volume.Response{}
+	// return volume.ErrorResponse{}
+	panic("Remove")
 }
 
 // Mount implements /VolumeDriver.Mount
-func (d IPFS) Mount(r volume.MountRequest) volume.Response {
+func (d IPFS) Mount(r volume.MountRequest) volume.MountResponse {
 	fmt.Printf("Mount %v\n", r)
 	volumeName := r.Name
 
 	if volumePath, ok := d.volumes[volumeName]; ok {
-		return volume.Response{Mountpoint: volumePath}
+		return volume.MountResponse{
+			Mountpoint: volumePath,
+		}
 	}
 
-	return volume.Response{}
+	return volume.MountResponse{}
 }
 
 // Unmount implements /VolumeDriver.Mount
-func (d IPFS) Unmount(r volume.UnmountRequest) volume.Response {
+func (d IPFS) Unmount(r volume.UnmountRequest) volume.ErrorResponse {
 	fmt.Printf("Unmount %v: nothing to do\n", r)
-	return volume.Response{}
+	return volume.ErrorResponse{}
 }
 
 // Get implements /VolumeDriver.Get
-func (d IPFS) Get(r volume.Request) volume.Response {
-	fmt.Printf("Get %v\n", r)
-	volumeName := r.Name
+func (d IPFS) Get(r volume.GetRequest) volume.GetResponse {
+	// fmt.Printf("Get %v\n", r)
+	// volumeName := r.Name
 
-	if volumePath, ok := d.volumes[volumeName]; ok {
-		return volume.Response{Volume: &volume.Volume{Name: volumeName, Mountpoint: volumePath}}
-	}
+	// if volumePath, ok := d.volumes[volumeName]; ok {
+	// 	return volume.GetResponse{Volume: &volume.Volume{Name: volumeName, Mountpoint: volumePath}}
+	// }
 
-	return volume.Response{Err: fmt.Sprintf("volume %s does not exists", volumeName)}
+	// return volume.GetResponse{}
+	panic("Get")
 }
 
 // List implements /VolumeDriver.List
-func (d IPFS) List(r volume.Request) volume.Response {
-	fmt.Printf("List %v\n", r)
+func (d IPFS) List(r volume.GetRequest) volume.ListResponse {
+	// fmt.Printf("List %v\n", r)
 
-	volumes := []*volume.Volume{}
+	// volumes := []*volume.Volume{}
 
-	for name, path := range d.volumes {
-		volumes = append(volumes, &volume.Volume{Name: name, Mountpoint: path})
-	}
+	// for name, path := range d.volumes {
+	// 	volumes = append(volumes, &volume.Volume{Name: name, Mountpoint: path})
+	// }
 
-	return volume.Response{Volumes: volumes}
+	panic("List")
 }
 
 // Capabilities implements /VolumeDriver.Capabilities
-func (d IPFS) Capabilities(r volume.Request) volume.Response {
+func (d IPFS) Capabilities(r volume.GetRequest) volume.CapabilitiesResponse {
 	// FIXME(vdemeester) handle capabilities better
-	return volume.Response{
-		Capabilities: volume.Capability{
-			Scope: "local",
-		},
-	}
+	// return volume.Response{
+	// 	Capabilities: volume.Capability{
+	// 		Scope: "local",
+	// 	},
+	// }
+	panic("Capabilities")
 }
