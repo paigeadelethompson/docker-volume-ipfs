@@ -1,93 +1,69 @@
-package myFuse
+package fuse
 
 import (
 	"context"
-	"flag"
-	"fmt"
 	"log"
-	"os"
-	"syscall"
-
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
 	_ "bazil.org/fuse/fs/fstestutil"
 )
 
-func usage() {
-	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
-	fmt.Fprintf(os.Stderr, "  %s MOUNTPOINT\n", os.Args[0])
-	flag.PrintDefaults()
-}
-
-func setupFUse() {
-	flag.Usage = usage
-	flag.Parse()
-
-	if flag.NArg() != 1 {
-		usage()
-		os.Exit(2)
-	}
-	mountpoint := flag.Arg(0)
-
-	c, err := fuse.Mount(
-		mountpoint,
-		fuse.FSName("helloworld"),
-		fuse.Subtype("hellofs"),
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer c.Close()
-
-	err = fs.Serve(c, FS{})
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-// FS implements the hello world file system.
 type FS struct{}
 
 func (FS) Root() (fs.Node, error) {
-	return Dir{}, nil
-}
+	return Dir {
 
-// Dir implements both Node and Handle for the root directory.
-type Dir struct{}
-
-func (Dir) Attr(ctx context.Context, a *fuse.Attr) error {
-	a.Inode = 1
-	a.Mode = os.ModeDir | 0o555
-	return nil
-}
-
-func (Dir) Lookup(ctx context.Context, name string) (fs.Node, error) {
-	if name == "hello" {
-		return File{}, nil
-	}
-	return nil, syscall.ENOENT
-}
-
-var dirDirs = []fuse.Dirent{
-	{Inode: 2, Name: "hello", Type: fuse.DT_File},
+	}, nil
 }
 
 func (Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
-	return dirDirs, nil
+	panic("Dir.ReadDirAll")
 }
 
-// File implements both Node and Handle for the hello file.
 type File struct{}
 
-const greeting = "hello, world\n"
-
 func (File) Attr(ctx context.Context, a *fuse.Attr) error {
-	a.Inode = 2
-	a.Mode = 0o444
-	a.Size = uint64(len(greeting))
-	return nil
+	panic("File.Attr")
 }
 
 func (File) ReadAll(ctx context.Context) ([]byte, error) {
-	return []byte(greeting), nil
+	panic("File.ReadAll")
+}
+
+type Dir struct{}
+
+func (Dir) Attr(ctx context.Context, a *fuse.Attr) error {
+	panic("Dir.Attr")
+}
+
+func (Dir) Lookup(ctx context.Context, name string) (fs.Node, error) {
+	panic("Dir.Lookup")
+}
+
+type FUSEController struct { 
+	mountPoint string
+	conn *fuse.Conn
+}
+
+func New(mountPoint string) FUSEController {
+	f := FUSEController {
+		mountPoint: mountPoint,
+	}
+
+	conn, err := fuse.Mount(
+		f.mountPoint,
+		fuse.FSName("dockerfs"),
+		fuse.Subtype("ipfs"),
+	)
+	f.conn = conn
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.conn.Close()
+	
+	fs.Serve(f.conn, FS{})
+
+	return f
 }
